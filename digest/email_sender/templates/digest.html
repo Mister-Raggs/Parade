@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parade Digest — {{ date_str }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0f2f5; padding: 24px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- Main container -->
+        <table width="620" cellpadding="0" cellspacing="0" border="0" style="max-width: 620px; width: 100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #0f0f1a; padding: 32px 40px; border-radius: 12px 12px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 4px; font-size: 11px; color: #6366f1; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Daily Digest</p>
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">Parade</h1>
+                    <p style="margin: 6px 0 0; font-size: 14px; color: #94a3b8;">Newly funded companies &amp; open tech roles</p>
+                  </td>
+                  <td align="right" style="vertical-align: top;">
+                    <p style="margin: 0; font-size: 13px; color: #64748b; white-space: nowrap;">{{ date_str }}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Stats bar -->
+          <tr>
+            <td style="background-color: #1e1e2e; padding: 14px 40px; border-bottom: 1px solid #2d2d3d;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <span style="display: inline-block; background-color: #1d4ed8; color: #ffffff; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-right: 8px;">{{ total_companies }} companies</span>
+                    <span style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px;">{{ total_jobs }} open roles</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {% if companies %}
+          {% for company in companies %}
+          <!-- Company card -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 28px 40px; border-bottom: 1px solid #e2e8f0;">
+
+              <!-- Company header -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
+                <tr>
+                  <td style="vertical-align: middle;">
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #0f172a;">{{ company.name }}</h2>
+                  </td>
+                  {% if company.funding_amount or company.funding_round %}
+                  <td align="right" style="vertical-align: middle; white-space: nowrap; padding-left: 16px;">
+                    <span style="background-color: #f0fdf4; color: #166534; font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                      {% if company.funding_amount %}{{ company.funding_amount }}{% endif %}{% if company.funding_amount and company.funding_round %} · {% endif %}{% if company.funding_round %}{{ company.funding_round }}{% endif %}
+                    </span>
+                  </td>
+                  {% endif %}
+                </tr>
+              </table>
+
+              <!-- Description -->
+              {% if company.description %}
+              <p style="margin: 0 0 12px; font-size: 14px; color: #475569; line-height: 1.6;">{{ company.description }}</p>
+              {% endif %}
+
+              <!-- Links -->
+              <p style="margin: 0 0 20px; font-size: 12px;">
+                <a href="{{ company.source_url }}" style="color: #6366f1; text-decoration: none; font-weight: 500;">Read article →</a>
+                {% if company.website %}
+                &nbsp;&nbsp;·&nbsp;&nbsp;
+                <a href="{{ company.website }}" style="color: #94a3b8; text-decoration: none;">{{ company.website | replace('https://', '') | replace('http://', '') }}</a>
+                {% endif %}
+              </p>
+
+              {% if company.jobs %}
+              <!-- Jobs section -->
+              <p style="margin: 0 0 10px; font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 1.5px; text-transform: uppercase;">Open Tech Roles</p>
+
+              {% for job in company.jobs %}
+              <!-- Job row -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 8px;">
+                <tr>
+                  <td style="vertical-align: middle; padding: 8px 12px; background-color: #f8fafc; border-radius: 6px; border-left: 3px solid {{ loop.cycle('#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899') }};">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td>
+                          <span style="display: inline-block; font-size: 10px; font-weight: 600; color: #6366f1; background-color: #eef2ff; padding: 2px 7px; border-radius: 3px; margin-right: 8px; vertical-align: middle;">{{ job.department }}</span>
+                          <a href="{{ job.url }}" style="font-size: 14px; font-weight: 600; color: #0f172a; text-decoration: none; vertical-align: middle;">{{ job.title }}</a>
+                        </td>
+                        <td align="right" style="font-size: 12px; color: #94a3b8; white-space: nowrap; padding-left: 12px;">{{ job.location }}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              {% endfor %}
+
+              {% if company.careers_url %}
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="{{ company.careers_url }}" style="color: #6366f1; text-decoration: none; font-weight: 500;">View all openings →</a>
+              </p>
+              {% endif %}
+
+              {% else %}
+              <p style="margin: 0; font-size: 13px; color: #94a3b8; font-style: italic;">No tech roles found on careers page.</p>
+              {% endif %}
+
+            </td>
+          </tr>
+          {% endfor %}
+
+          {% else %}
+          <!-- Empty state -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 48px 40px; text-align: center;">
+              <p style="margin: 0; font-size: 32px;">📭</p>
+              <p style="margin: 16px 0 8px; font-size: 18px; font-weight: 600; color: #0f172a;">No new funding news today</p>
+              <p style="margin: 0; font-size: 14px; color: #64748b;">Check back tomorrow for the latest funding rounds.</p>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0f0f1a; padding: 20px 40px; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #475569;">
+                Parade Digest &nbsp;·&nbsp; Sent daily via GitHub Actions
+                <br>
+                <span style="color: #334155;">Data from TechCrunch, Crunchbase, VentureBeat</span>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
