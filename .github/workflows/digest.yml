@@ -24,6 +24,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r digest/requirements.txt
 
+      - name: Debug secret lengths
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: |
+          echo "GMAIL_USER length: ${#GMAIL_USER}"
+          echo "GMAIL_APP_PASSWORD length: ${#GMAIL_APP_PASSWORD}"
+          echo "RECIPIENT_EMAIL length: ${#RECIPIENT_EMAIL}"
+
       - name: Run digest
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
