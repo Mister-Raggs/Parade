@@ -37,7 +37,9 @@ def scrape_careers(company: FundedCompany, session: requests.Session, config: Co
     time.sleep(0.5)  # polite delay
 
     ats = _detect_ats(company.careers_url)
+    scraper_used = ats or "generic"
     jobs = []
+    used_fallback = False
 
     try:
         if ats == "lever":
@@ -51,16 +53,29 @@ def scrape_careers(company: FundedCompany, session: requests.Session, config: Co
         else:
             jobs = _scrape_generic(company.careers_url, session)
     except Exception as e:
-        logger.warning(f"Careers scrape failed for {company.name} ({company.careers_url}): {e}")
-        # Try generic as fallback if ATS scraper failed
+        logger.warning(f"Careers scrape failed for {company.name} | scraper={scraper_used} error={e}")
         if ats and ats != "generic":
             try:
                 jobs = _scrape_generic(company.careers_url, session)
+                used_fallback = True
+                scraper_used = f"{ats}->generic_fallback"
             except Exception:
                 pass
 
     tech_jobs = [j for j in jobs if _is_tech_role(j.title, config)]
-    return tech_jobs[:config.MAX_JOBS_PER_CO]
+    excluded_count = len(jobs) - len(tech_jobs)
+    capped = len(tech_jobs) > config.MAX_JOBS_PER_CO
+    result = tech_jobs[:config.MAX_JOBS_PER_CO]
+
+    logger.info(
+        f"  {company.name} | scraper={scraper_used} "
+        f"total_jobs={len(jobs)} tech_matched={len(tech_jobs)} "
+        f"excluded={excluded_count} returned={len(result)}"
+        + (f" (capped at {config.MAX_JOBS_PER_CO})" if capped else "")
+        + (" (used fallback)" if used_fallback else "")
+    )
+
+    return result
 
 
 def _detect_ats(url: str) -> Optional[str]:

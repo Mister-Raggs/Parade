@@ -28,22 +28,41 @@ ATS_PATTERNS = {
 
 
 def resolve_company(company: FundedCompany, session: requests.Session) -> None:
-    # Try to find website
-    website = (
-        _extract_website_from_article(company.source_url, company.name, session)
-        or _clearbit_lookup(company.name)
-        or _duckduckgo_search(company.name, session)
-    )
+    # Try to find website via 3-tier fallback
+    website = None
+    resolution_method = None
+
+    website = _extract_website_from_article(company.source_url, company.name, session)
+    if website:
+        resolution_method = "article_parse"
+    else:
+        website = _clearbit_lookup(company.name)
+        if website:
+            resolution_method = "clearbit"
+        else:
+            website = _duckduckgo_search(company.name, session)
+            if website:
+                resolution_method = "duckduckgo"
 
     if not website:
-        logger.warning(f"Could not resolve website for: {company.name}")
+        logger.warning(
+            f"Could not resolve website for: {company.name} | "
+            f"resolved=false methods_tried=article_parse,clearbit,duckduckgo"
+        )
         return
 
     company.website = website
+    logger.info(f"  Resolved: {company.name} -> {website} | method={resolution_method}")
+
     company.careers_url = _find_careers_url(website, session)
 
-    if not company.careers_url:
-        logger.warning(f"No careers URL found for: {company.name} ({website})")
+    if company.careers_url:
+        careers_method = "ats_link" if any(
+            re.search(p, company.careers_url, re.I) for p in ATS_PATTERNS.values()
+        ) else "common_path_or_homepage"
+        logger.info(f"  Careers URL: {company.careers_url} | method={careers_method}")
+    else:
+        logger.warning(f"  No careers URL found for: {company.name} ({website})")
 
 
 def _extract_website_from_article(article_url: str, company_name: str, session: requests.Session) -> Optional[str]:

@@ -34,20 +34,44 @@ SPLIT_WORDS = [
 def fetch_all_feeds(config: Config, session: requests.Session) -> list:
     all_companies: list[FundedCompany] = []
     seen_names: list[str] = []
+    feed_stats = []
 
     for feed_url in config.RSS_FEEDS:
+        stats = {"url": feed_url, "entries_found": 0, "duplicates_skipped": 0, "error": None}
         try:
             companies = fetch_feed(feed_url, config.LOOKBACK_HOURS, session)
+            stats["entries_found"] = len(companies)
             for company in companies:
-                if not _is_duplicate(company.name, seen_names):
+                if _is_duplicate(company.name, seen_names):
+                    stats["duplicates_skipped"] += 1
+                    logger.info(f"  Dedup: skipped '{company.name}' (similar to existing)")
+                else:
                     all_companies.append(company)
                     seen_names.append(company.name)
                     if len(all_companies) >= config.MAX_COMPANIES:
+                        logger.info(f"  Reached max companies limit ({config.MAX_COMPANIES})")
+                        feed_stats.append(stats)
+                        _log_feed_summary(feed_stats)
                         return all_companies
         except Exception as e:
+            stats["error"] = str(e)
             logger.warning(f"Failed to fetch feed {feed_url}: {e}")
+        feed_stats.append(stats)
 
+    _log_feed_summary(feed_stats)
     return all_companies
+
+
+def _log_feed_summary(feed_stats: list) -> None:
+    logger.info("--- RSS Feed Summary ---")
+    for stats in feed_stats:
+        status = "ERROR" if stats["error"] else "OK"
+        logger.info(
+            f"  {stats['url']} | status={status} "
+            f"entries={stats['entries_found']} dupes_skipped={stats['duplicates_skipped']}"
+        )
+        if stats["error"]:
+            logger.info(f"    error: {stats['error']}")
 
 
 def fetch_feed(url: str, lookback_hours: int, session: requests.Session) -> list:
@@ -62,20 +86,32 @@ def fetch_feed(url: str, lookback_hours: int, session: requests.Session) -> list
 
     cutoff = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
     companies = []
+    total_entries = len(feed.entries)
+    skipped_old = 0
+    skipped_no_signal = 0
+    skipped_no_name = 0
 
     for entry in feed.entries:
         try:
             published = _parse_published(entry)
             if published and published < cutoff:
+                skipped_old += 1
                 continue
 
             company = parse_entry(entry)
             if company:
+                logger.info(
+                    f"  Matched: {company.name} | amount={company.funding_amount or 'N/A'} "
+                    f"round={company.funding_round or 'N/A'}"
+                )
                 companies.append(company)
         except Exception as e:
             logger.debug(f"Skipping entry: {e}")
 
-    logger.info(f"Found {len(companies)} funding entries from {url}")
+    logger.info(
+        f"Feed {url} | total_entries={total_entries} matched={len(companies)} "
+        f"skipped_old={skipped_old} skipped_no_funding={total_entries - len(companies) - skipped_old}"
+    )
     return companies
 
 
