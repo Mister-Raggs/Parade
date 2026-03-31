@@ -99,9 +99,11 @@ def run():
     for c in companies:
         logger.info(
             f"  {c.name:30s} | website={'yes' if c.website else 'NO ':3s} "
+            f"| resolved_via={c.resolution_method or 'none':20s} "
             f"| careers={'yes' if c.careers_url else 'NO ':3s} "
+            f"| scraper={c.scraper_used or 'none':25s} "
             f"| jobs={len(c.jobs)}"
-            + (f" | funding={c.funding_amount}" if c.funding_amount else "")
+            + (f" | {c.funding_amount}" if c.funding_amount else "")
         )
     logger.info("=" * 60)
     logger.info("Done.")

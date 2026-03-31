@@ -67,6 +67,8 @@ def scrape_careers(company: FundedCompany, session: requests.Session, config: Co
     capped = len(tech_jobs) > config.MAX_JOBS_PER_CO
     result = tech_jobs[:config.MAX_JOBS_PER_CO]
 
+    company.scraper_used = scraper_used
+
     logger.info(
         f"  {company.name} | scraper={scraper_used} "
         f"total_jobs={len(jobs)} tech_matched={len(tech_jobs)} "

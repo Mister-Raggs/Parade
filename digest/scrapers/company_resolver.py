@@ -52,6 +52,7 @@ def resolve_company(company: FundedCompany, session: requests.Session) -> None:
         return
 
     company.website = website
+    company.resolution_method = resolution_method
     logger.info(f"  Resolved: {company.name} -> {website} | method={resolution_method}")
 
     company.careers_url = _find_careers_url(website, session)

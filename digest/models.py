@@ -20,3 +20,5 @@ class FundedCompany:
     website: Optional[str] = None
     careers_url: Optional[str] = None
     jobs: list = field(default_factory=list)
+    resolution_method: Optional[str] = None
+    scraper_used: Optional[str] = None
