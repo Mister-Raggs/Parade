@@ -115,6 +115,7 @@ def _clearbit_lookup(company_name: str) -> Optional[str]:
         url = f"https://autocomplete.clearbit.com/v1/companies/suggest?query={requests.utils.quote(company_name)}"
         resp = requests.get(url, timeout=8)
         if not resp.ok:
+            logger.warning(f"Clearbit degraded: HTTP {resp.status_code} for query='{company_name}' — falling back to DuckDuckGo")
             return None
 
         results = resp.json()
@@ -128,8 +129,12 @@ def _clearbit_lookup(company_name: str) -> Optional[str]:
             if domain and fuzz.token_sort_ratio(company_name.lower(), name.lower()) > 70:
                 return f"https://{domain}"
 
+    except requests.exceptions.Timeout:
+        logger.warning(f"Clearbit timeout for query='{company_name}' — falling back to DuckDuckGo")
+    except requests.exceptions.ConnectionError:
+        logger.warning("Clearbit unreachable (ConnectionError) — falling back to DuckDuckGo")
     except Exception as e:
-        logger.debug(f"Clearbit lookup failed for {company_name}: {e}")
+        logger.warning(f"Clearbit failed for query='{company_name}': {e} — falling back to DuckDuckGo")
 
     return None
 
