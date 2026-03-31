@@ -83,6 +83,11 @@ def run():
     logger.info("=" * 60)
     logger.info(f"  Companies found:       {len(companies)}")
     logger.info(f"  Websites resolved:     {websites_resolved}/{len(companies)}")
+    tier_counts = {"article_parse": 0, "clearbit": 0, "duckduckgo": 0}
+    for c in companies:
+        if c.resolution_method in tier_counts:
+            tier_counts[c.resolution_method] += 1
+    logger.info(f"  Resolution tiers:      article={tier_counts['article_parse']} clearbit={tier_counts['clearbit']} duckduckgo={tier_counts['duckduckgo']}")
     logger.info(f"  Careers pages found:   {careers_found}/{len(companies)}")
     logger.info(f"  Companies with jobs:   {companies_with_jobs}/{len(companies)}")
     logger.info(f"  Total tech roles:      {total_jobs}")
